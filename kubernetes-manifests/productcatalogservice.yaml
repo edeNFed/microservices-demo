@@ -43,12 +43,8 @@ spec:
         #   value: "1"
         # - name: JAEGER_SERVICE_ADDR
         #   value: "jaeger-collector:14268"
-        readinessProbe:
-          exec:
-            command: ["/bin/grpc_health_probe", "-addr=:3550"]
-        livenessProbe:
-          exec:
-            command: ["/bin/grpc_health_probe", "-addr=:3550"]
+        - name: OTEL_COLLECTOR_ADDR
+          value: "otel-collector.arion-system:55680"
         resources:
           requests:
             cpu: 100m
