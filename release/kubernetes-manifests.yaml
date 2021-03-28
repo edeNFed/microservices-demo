@@ -257,6 +257,8 @@ spec:
             value: "adservice:9555"
           - name: ENV_PLATFORM
             value: "gcp"
+          - name: OTEL_COLLECTOR_ADDR
+            value: "http://otel-collector.arion-system:55680"
           # - name: DISABLE_TRACING
           #   value: "1"
           # - name: DISABLE_PROFILER
