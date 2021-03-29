@@ -25,6 +25,15 @@ spec:
       labels:
         app: adservice
     spec:
+      volumes:
+        - name: agentdir
+          emptyDir: {}
+      initContainers:
+        - name: copy-agent
+          image: edenfed/otel-java-agent
+          volumeMounts:
+            - mountPath: /agent
+              name: agentdir
       serviceAccountName: default
       terminationGracePeriodSeconds: 5
       containers:
@@ -35,12 +44,19 @@ spec:
         env:
         - name: PORT
           value: "9555"
+        - name: JAVA_TOOL_OPTIONS
+          value: "-javaagent:/agent/opentelemetry-javaagent-all.jar -Dotel.metrics.exporter=none -Dotel.traces.sampler=always_on -Dotel.exporter.otlp.endpoint=http://otel-collector.arion-system:55680"
+        - name: OTEL_RESOURCE_ATTRIBUTES
+          value: service.name=adservice
         # - name: DISABLE_STATS
         #   value: "1"
         # - name: DISABLE_TRACING
         #   value: "1"
         # - name: JAEGER_SERVICE_ADDR
         #   value: "jaeger-collector:14268"
+        volumeMounts:
+          - mountPath: /agent
+            name: agentdir
         resources:
           requests:
             cpu: 200m
@@ -48,16 +64,6 @@ spec:
           limits:
             cpu: 300m
             memory: 300Mi
-        readinessProbe:
-          initialDelaySeconds: 20
-          periodSeconds: 15
-          exec:
-            command: ["/bin/grpc_health_probe", "-addr=:9555"]
-        livenessProbe:
-          initialDelaySeconds: 20
-          periodSeconds: 15
-          exec:
-            command: ["/bin/grpc_health_probe", "-addr=:9555"]
 ---
 apiVersion: v1
 kind: Service

@@ -35,7 +35,10 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpgrpc"
+	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/semconv"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
@@ -149,9 +152,13 @@ func initOtelTracing(log logrus.FieldLogger, ctx context.Context) {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	tracerProvider := sdktrace.NewTracerProvider(sdktrace.WithBatcher(exporter))
+	res := resource.Merge(resource.Default(),
+		resource.NewWithAttributes(semconv.ServiceNameKey.String("productcatalog")))
+	tracerProvider := sdktrace.NewTracerProvider(sdktrace.WithBatcher(exporter),
+		sdktrace.WithResource(res),
+		sdktrace.WithSampler(sdktrace.AlwaysSample()))
 	otel.SetTracerProvider(tracerProvider)
+	otel.SetTextMapPropagator(propagation.TraceContext{})
 	log.Info("OpenTelemetry initialization completed.")
 }
 

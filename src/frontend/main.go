@@ -25,10 +25,14 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	middleware "go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
+	grpcotel "go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpgrpc"
+	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/semconv"
 	"google.golang.org/grpc"
 )
 
@@ -158,8 +162,13 @@ func initOtelTracing(log logrus.FieldLogger, ctx context.Context) {
 		log.Fatal(err)
 	}
 
-	tracerProvider := sdktrace.NewTracerProvider(sdktrace.WithBatcher(exporter))
+	res := resource.Merge(resource.Default(),
+		resource.NewWithAttributes(semconv.ServiceNameKey.String("frontend")))
+	tracerProvider := sdktrace.NewTracerProvider(sdktrace.WithBatcher(exporter),
+		sdktrace.WithResource(res),
+		sdktrace.WithSampler(sdktrace.AlwaysSample()))
 	otel.SetTracerProvider(tracerProvider)
+	otel.SetTextMapPropagator(propagation.TraceContext{})
 	log.Info("OpenTelemetry initialization completed.")
 }
 
@@ -175,7 +184,9 @@ func mustConnGRPC(ctx context.Context, conn **grpc.ClientConn, addr string) {
 	var err error
 	*conn, err = grpc.DialContext(ctx, addr,
 		grpc.WithInsecure(),
-		grpc.WithTimeout(time.Second*3))
+		grpc.WithTimeout(time.Second*3),
+		grpc.WithUnaryInterceptor(grpcotel.UnaryClientInterceptor()),
+		grpc.WithStreamInterceptor(grpcotel.StreamClientInterceptor()))
 	if err != nil {
 		panic(errors.Wrapf(err, "grpc: failed to connect %s", addr))
 	}
