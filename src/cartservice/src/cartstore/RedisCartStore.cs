@@ -194,6 +194,11 @@ namespace cartservice.cartstore
             }
         }
 
+        public ConnectionMultiplexer GetConnection()
+        {
+            return redis;
+        }
+
         public bool Ping()
         {
             try

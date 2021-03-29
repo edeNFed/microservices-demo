@@ -9,6 +9,10 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
 using cartservice.cartstore;
 using cartservice.services;
+using System.Diagnostics;
+using OpenTelemetry;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
 namespace cartservice
 {
@@ -41,10 +45,16 @@ namespace cartservice
             // Initialize the redis store
             cartStore.InitializeAsync().GetAwaiter().GetResult();
             Console.WriteLine("Initialization completed");
-
             services.AddSingleton<ICartStore>(cartStore);
 
             services.AddGrpc();
+            string otelAddress = Configuration["OTEL_COLLECTOR_ADDR"];
+            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+            services.AddOpenTelemetryTracing((builder) => builder
+                .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(this.Configuration.GetValue<string>("Otel:ServiceName")))
+                .AddAspNetCoreInstrumentation()
+                .AddRedisInstrumentation(cartStore.GetConnection())
+                .AddOtlpExporter(opt => opt.Endpoint = new Uri(otelAddress)));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

@@ -15,6 +15,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
+using StackExchange.Redis;
 using System.Linq;
 
 namespace cartservice.cartstore
@@ -84,6 +85,11 @@ namespace cartservice.cartstore
         public bool Ping()
         {
             return true;
+        }
+
+        public ConnectionMultiplexer GetConnection()
+        {
+            return null;
         }
     }
 }
