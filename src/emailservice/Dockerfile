@@ -44,9 +44,11 @@ WORKDIR /email_server
 
 # Grab packages from builder
 COPY --from=builder /usr/local/lib/python3.7/ /usr/local/lib/python3.7/
+# opentelemetry-instrumentation installs scripts here:
+COPY --from=builder /usr/local/bin/opentelemetry* /usr/local/bin/
 
 # Add the application
 COPY . .
 
 EXPOSE 8080
-ENTRYPOINT [ "python", "email_server.py" ]
+ENTRYPOINT ["opentelemetry-instrument","python", "email_server.py"]
