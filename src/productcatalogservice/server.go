@@ -153,7 +153,7 @@ func initOtelTracing(log logrus.FieldLogger, ctx context.Context) {
 		log.Fatal(err)
 	}
 	res := resource.Merge(resource.Default(),
-		resource.NewWithAttributes(semconv.ServiceNameKey.String("productcatalog")))
+		resource.NewWithAttributes(semconv.ServiceNameKey.String("productcatalogservice")))
 	tracerProvider := sdktrace.NewTracerProvider(sdktrace.WithBatcher(exporter),
 		sdktrace.WithResource(res),
 		sdktrace.WithSampler(sdktrace.AlwaysSample()))

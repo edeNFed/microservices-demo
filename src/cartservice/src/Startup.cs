@@ -10,6 +10,7 @@ using Microsoft.Extensions.Hosting;
 using cartservice.cartstore;
 using cartservice.services;
 using System.Diagnostics;
+using System.Collections.Generic;
 using OpenTelemetry;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -51,7 +52,12 @@ namespace cartservice
             string otelAddress = Configuration["OTEL_COLLECTOR_ADDR"];
             AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
             services.AddOpenTelemetryTracing((builder) => builder
-                .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(this.Configuration.GetValue<string>("Otel:ServiceName")))
+                .SetResourceBuilder(ResourceBuilder.CreateDefault()
+                    .AddAttributes(new Dictionary<string, object>
+                    {
+                        ["telemetry.sdk.language"] = "dotnet",
+                    })
+                    .AddService(this.Configuration.GetValue<string>("Otel:ServiceName")))
                 .AddAspNetCoreInstrumentation()
                 .AddRedisInstrumentation(cartStore.GetConnection())
                 .AddOtlpExporter(opt => opt.Endpoint = new Uri(otelAddress)));

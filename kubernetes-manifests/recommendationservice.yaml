@@ -41,6 +41,8 @@ spec:
           value: "otel-collector.arion-system:55680"
         - name: OTEL_EXPORTER_OTLP_INSECURE
           value: "True"
+        - name: OTEL_TRACES_EXPORTER
+          value: otlp
         - name: OTEL_RESOURCE_ATTRIBUTES
           value: service.name=recommendationservice
         resources:
